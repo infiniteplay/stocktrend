@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKU Trend Analysis Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .dashboard-header {
+            background: white;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .date-range {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .date-input {
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .search-box {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 280px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            padding: 24px;
+            background: white;
+            margin: 0 24px 24px 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #1f2937;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .filters-section {
+            background: white;
+            margin: 0 24px 24px 24px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 20px;
+            background: #f3f4f6;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .filter-tab.active {
+            background: white;
+            color: #1f2937;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table {
+            background: white;
+            margin: 0 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .quantity-badge, .amount-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .high-demand { background: #fef3c7; color: #92400e; }
+        .medium-demand { background: #dbeafe; color: #1e40af; }
+        .low-demand { background: #d1fae5; color: #065f46; }
+        .declining { background: #fee2e2; color: #dc2626; }
+        .stable { background: #e5e7eb; color: #374151; }
+
+        .trend-up { 
+            color: #059669; 
+            font-weight: 600;
+        }
+        .trend-up::after {
+            content: " ↗";
+        }
+
+        .trend-down { 
+            color: #dc2626; 
+            font-weight: 600;
+        }
+        .trend-down::after {
+            content: " ↘";
+        }
+
+        .trend-stable { 
+            color: #6b7280; 
+            font-weight: 600;
+        }
+        .trend-stable::after {
+            content: " →";
+        }
+
+        .forecast-value {
+            font-weight: 600;
+            color: #3b82f6;
+        }
+
+        .amount-cell {
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .filter-content {
+            display: none;
+        }
+
+        .filter-content.active {
+            display: block;
+        }
+
+        .summary-row {
+            background: #f8fafc !important;
+            font-weight: 600;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .confidence-high { color: #059669; font-weight: 600; }
+        .confidence-medium { color: #f59e0b; font-weight: 600; }
+        .confidence-low { color: #dc2626; font-weight: 600; }
+
+        .velocity-fast { background: #fef3c7; color: #92400e; }
+        .velocity-medium { background: #dbeafe; color: #1e40af; }
+        .velocity-slow { background: #d1fae5; color: #065f46; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">SKU Trend Analysis & Forecast</h1>
+        <div class="header-controls">
+            <div class="date-range">
+                <span>Historical Data:</span>
+                <input type="date" class="date-input" value="2024-09-01">
+                <span>to</span>
+                <input type="date" class="date-input" value="2025-08-31">
+            </div>
+            <button class="btn btn-secondary">Export Forecast</button>
+            <button class="btn btn-primary">Generate Report</button>
+            <input type="text" class="search-box" placeholder="Search by SKU, Product Name, or Depot...">
+        </div>
+    </div>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-value">2,847</div>
+            <div class="metric-label">Active SKUs</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">₹8.9M</div>
+            <div class="metric-label">Monthly Sales Value</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">18</div>
+            <div class="metric-label">Total Depots</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">12.4%</div>
+            <div class="metric-label">Avg Growth Rate</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">89.2%</div>
+            <div class="metric-label">Forecast Accuracy</div>
+        </div>
+    </div>
+
+    <div class="filters-section">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-tab="sku-forecast">SKU Forecast</button>
+            <button class="filter-tab" data-tab="depot-wise">Depot Wise</button>
+            <button class="filter-tab" data-tab="channel-wise">Channel Wise</button>
+            <button class="filter-tab" data-tab="category-trends">Category Trends</button>
+            <button class="filter-tab" data-tab="seasonal-patterns">Seasonal Patterns</button>
+        </div>
+
+        <div id="sku-forecast" class="filter-content active">
+            <div class="data-table">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU Code</th>
+                                <th>Product Name</th>
+                                <th>Depot</th>
+                                <th>Last 3M Avg</th>
+                                <th>Growth Trend</th>
+                                <th>Next Month Forecast</th>
+                                <th>Confidence Level</th>
+                                <th>Velocity Category</th>
+                                <th>Recommended Buffer</th>
+                                <th>Total Inventory Need</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>SKU001</strong></td>
+                                <td>Premium Rice 5kg</td>
+                                <td>Mumbai Depot</td>
+                                <td><span class="quantity-badge high-demand">2,450</span></td>
+                                <td class="trend-up">+15.2%</td>
+                                <td class="forecast-value">2,825</td>
+                                <td class="confidence-high">High (92%)</td>
+                                <td><span class="velocity-fast">Fast</span></td>
+                                <td>565</td>
+                                <td class="amount-cell"><strong>3,390</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU002</strong></td>
+                                <td>Organic Wheat Flour 1kg</td>
+                                <td>Delhi Depot</td>
+                                <td><span class="quantity-badge medium-demand">1,680</span></td>
+                                <td class="trend-up">+8.7%</td>
+                                <td class="forecast-value">1,826</td>
+                                <td class="confidence-high">High (88%)</td>
+                                <td><span class="velocity-medium">Medium</span></td>
+                                <td>365</td>
+                                <td class="amount-cell"><strong>2,191</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU003</strong></td>
+                                <td>Cooking Oil 1L</td>
+                                <td>Pune Depot</td>
+                                <td><span class="quantity-badge medium-demand">1,250</span></td>
+                                <td class="trend-stable">+2.1%</td>
+                                <td class="forecast-value">1,276</td>
+                                <td class="confidence-medium">Medium (75%)</td>
+                                <td><span class="velocity-medium">Medium</span></td>
+                                <td>255</td>
+                                <td class="amount-cell"><strong>1,531</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU004</strong></td>
+                                <td>Basmati Rice 10kg</td>
+                                <td>Chennai Depot</td>
+                                <td><span class="quantity-badge high-demand">890</span></td>
+                                <td class="trend-up">+22.3%</td>
+                                <td class="forecast-value">1,088</td>
+                                <td class="confidence-high">High (91%)</td>
+                                <td><span class="velocity-fast">Fast</span></td>
+                                <td>218</td>
+                                <td class="amount-cell"><strong>1,306</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU005</strong></td>
+                                <td>Mixed Dal 500g</td>
+                                <td>Hyderabad Depot</td>
+                                <td><span class="quantity-badge low-demand">650</span></td>
+                                <td class="trend-down">-5.4%</td>
+                                <td class="forecast-value">615</td>
+                                <td class="confidence-medium">Medium (72%)</td>
+                                <td><span class="velocity-slow">Slow</span></td>
+                                <td>123</td>
+                                <td class="amount-cell"><strong>738</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU006</strong></td>
+                                <td>Tea Powder 250g</td>
+                                <td>Kolkata Depot</td>
+                                <td><span class="quantity-badge medium-demand">1,420</span></td>
+                                <td class="trend-up">+12.8%</td>
+                                <td class="forecast-value">1,602</td>
+                                <td class="confidence-high">High (86%)</td>
+                                <td><span class="velocity-fast">Fast</span></td>
+                                <td>320</td>
+                                <td class="amount-cell"><strong>1,922</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU007</strong></td>
+                                <td>Sugar 1kg</td>
+                                <td>Bangalore Depot</td>
+                                <td><span class="quantity-badge medium-demand">2,180</span></td>
+                                <td class="trend-stable">+1.8%</td>
+                                <td class="forecast-value">2,219</td>
+                                <td class="confidence-medium">Medium (78%)</td>
+                                <td><span class="velocity-medium">Medium</span></td>
+                                <td>444</td>
+                                <td class="amount-cell"><strong>2,663</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU008</strong></td>
+                                <td>Detergent Powder 1kg</td>
+                                <td>Ahmedabad Depot</td>
+                                <td><span class="quantity-badge low-demand">780</span></td>
+                                <td class="trend-down">-8.2%</td>
+                                <td class="forecast-value">716</td>
+                                <td class="confidence-low">Low (65%)</td>
+                                <td><span class="velocity-slow">Slow</span></td>
+                                <td>143</td>
+                                <td class="amount-cell"><strong>859</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="depot-wise" class="filter-content">
+            <div class="data-table">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Depot Name</th>
+                                <th>Location</th>
+                                <th>Active SKUs</th>
+                                <th>Monthly Throughput</th>
+                                <th>Avg Growth Rate</th>
+                                <th>Top Category</th>
+                                <th>Forecast Accuracy</th>
+                                <th>Total Inventory Need</th>
+                                <th>Storage Utilization</th>
+                                <th>Risk Level</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Mumbai Depot</strong></td>
+                                <td>Maharashtra</td>
+                                <td>485 SKUs</td>
+                                <td><span class="quantity-badge high-demand">28,450</span></td>
+                                <td class="trend-up">+14.2%</td>
+                                <td>Staples</td>
+                                <td class="confidence-high">92%</td>
+                                <td class="amount-cell">₹45.6L</td>
+                                <td>78%</td>
+                                <td class="confidence-high">Low</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Delhi Depot</strong></td>
+                                <td>Delhi</td>
+                                <td>420 SKUs</td>
+                                <td><span class="quantity-badge high-demand">24,680</span></td>
+                                <td class="trend-up">+11.8%</td>
+                                <td>Beverages</td>
+                                <td class="confidence-high">89%</td>
+                                <td class="amount-cell">₹38.2L</td>
+                                <td>82%</td>
+                                <td class="confidence-medium">Medium</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Bangalore Depot</strong></td>
+                                <td>Karnataka</td>
+                                <td>380 SKUs</td>
+                                <td><span class="quantity-badge medium-demand">19,250</span></td>
+                                <td class="trend-up">+9.4%</td>
+                                <td>Personal Care</td>
+                                <td class="confidence-medium">85%</td>
+                                <td class="amount-cell">₹32.8L</td>
+                                <td>74%</td>
+                                <td class="confidence-high">Low</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Chennai Depot</strong></td>
+                                <td>Tamil Nadu</td>
+                                <td>365 SKUs</td>
+                                <td><span class="quantity-badge medium-demand">17,890</span></td>
+                                <td class="trend-stable">+5.2%</td>
+                                <td>Household</td>
+                                <td class="confidence-medium">83%</td>
+                                <td class="amount-cell">₹28.9L</td>
+                                <td>69%</td>
+                                <td class="confidence-high">Low</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Pune Depot</strong></td>
+                                <td>Maharashtra</td>
+                                <td>340 SKUs</td>
+                                <td><span class="quantity-badge medium-demand">16,420</span></td>
+                                <td class="trend-up">+7.8%</td>
+                                <td>Snacks</td>
+                                <td class="confidence-medium">81%</td>
+                                <td class="amount-cell">₹26.4L</td>
+                                <td>71%</td>
+                                <td class="confidence-medium">Medium</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Hyderabad Depot</strong></td>
+                                <td>Telangana</td>
+                                <td>295 SKUs</td>
+                                <td><span class="quantity-badge low-demand">13,680</span></td>
+                                <td class="trend-stable">+3.6%</td>
+                                <td>Oils & Spices</td>
+                                <td class="confidence-medium">79%</td>
+                                <td class="amount-cell">₹22.1L</td>
+                                <td>65%</td>
+                                <td class="confidence-high">Low</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="channel-wise" class="filter-content">
+            <div class="data-table">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Channel Name</th>
+                                <th>Primary Markets</th>
+                                <th>Active SKUs</th>
+                                <th>Monthly Volume</th>
+                                <th>Growth Trend</th>
+                                <th>Top Performing Category</th>
+                                <th>Avg Order Value</th>
+                                <th>Forecast Accuracy</th>
+                                <th>Inventory Velocity</th>
+                                <th>Next Month Forecast</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Modern Trade</strong></td>
+                                <td>Metro Cities</td>
+                                <td>1,245 SKUs</td>
+                                <td><span class="quantity-badge high-demand">45,680</span></td>
+                                <td class="trend-up">+16.8%</td>
+                                <td>Premium Staples</td>
+                                <td class="amount-cell">₹2,845</td>
+                                <td class="confidence-high">94%</td>
+                                <td><span class="velocity-fast">Fast</span></td>
+                                <td class="forecast-value">53,350</td>
+                            </tr>
+                            <tr>
+                                <td><strong>E-commerce</strong></td>
+                                <td>Tier 1 & 2 Cities</td>
+                                <td>985 SKUs</td>
+                                <td><span class="quantity-badge high-demand">38,920</span></td>
+                                <td class="trend-up">+24.3%</td>
+                                <td>Personal Care</td>
+                                <td class="amount-cell">₹1,685</td>
+                                <td class="confidence-high">91%</td>
+                                <td><span class="velocity-fast">Fast</span></td>
+                                <td class="forecast-value">48,385</td>
+                            </tr>
+                            <tr>
+                                <td><strong>General Trade</strong></td>
+                                <td>All Markets</td>
+                                <td>1,850 SKUs</td>
+                                <td><span class="quantity-badge high-demand">62,450</span></td>
+                                <td class="trend-up">+8.9%</td>
+                                <td>Staples & Grains</td>
+                                <td class="amount-cell">₹1,125</td>
+                                <td class="confidence-medium">87%</td>
+                                <td><span class="velocity-medium">Medium</span></td>
+                                <td class="forecast-value">68,005</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Quick Commerce</strong></td>
+                                <td>Metro Cities</td>
+                                <td>420 SKUs</td>
+                                <td><span class="quantity-badge medium-demand">18,750</span></td>
+                                <td class="trend-up">+35.6%</td>
+                                <td>Snacks & Beverages</td>
+                                <td class="amount-cell">₹485</td>
+                                <td class="confidence-medium">89%</td>
+                                <td><span class="velocity-fast">Fast</span></td>
+                                <td class="forecast-value">25,425</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cash & Carry</strong></td>
+                                <td>Tier 2 & 3 Cities</td>
+                                <td>680 SKUs</td>
+                                <td><span class="quantity-badge medium-demand">24,680</span></td>
+                                <td class="trend-stable">+5.2%</td>
+                                <td>Bulk Staples</td>
+                                <td class="amount-cell">₹4,250</td>
+                                <td class="confidence-medium">85%</td>
+                                <td><span class="velocity-medium">Medium</span></td>
+                                <td class="forecast-value">25,965</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Institutional Sales</strong></td>
+                                <td>Pan India</td>
+                                <td>320 SKUs</td>
+                                <td><span class="quantity-badge low-demand">12,450</span></td>
+                                <td class="trend-up">+11.4%</td>
+                                <td>Bulk Packaging</td>
+                                <td class="amount-cell">₹8,950</td>
+                                <td class="confidence-high">92%</td>
+                                <td><span class="velocity-slow">Slow</span></td>
+                                <td class="forecast-value">13,870</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Export Markets</strong></td>
+                                <td>International</td>
+                                <td>185 SKUs</td>
+                                <td><span class="quantity-badge low-demand">5,680</span></td>
+                                <td class="trend-stable">+3.8%</td>
+                                <td>Specialty Products</td>
+                                <td class="amount-cell">₹12,500</td>
+                                <td class="confidence-low">78%</td>
+                                <td><span class="velocity-slow">Slow</span></td>
+                                <td class="forecast-value">5,895</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="category-trends" class="filter-content">
+            <div class="data-table">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Total SKUs</th>
+                                <th>Q3 Performance</th>
+                                <th>Growth Trend</th>
+                                <th>Seasonality Factor</th>
+                                <th>Q4 Forecast</th>
+                                <th>Market Share</th>
+                                <th>Inventory Buffer %</th>
+                                <th>Risk Assessment</th>
+                                <th>Key Driver</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Staples & Grains</strong></td>
+                                <td>680 SKUs</td>
+                                <td><span class="quantity-badge high-demand">₹2.4M</span></td>
+                                <td class="trend-up">+18.5%</td>
+                                <td>High (Festival Season)</td>
+                                <td class="forecast-value">₹2.85M</td>
+                                <td class="confidence-high">34.2%</td>
+                                <td>25%</td>
+                                <td class="confidence-high">Low</td>
+                                <td>Festival Demand</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Personal Care</strong></td>
+                                <td>420 SKUs</td>
+                                <td><span class="quantity-badge medium-demand">₹1.8M</span></td>
+                                <td class="trend-up">+12.3%</td>
+                                <td>Medium (Weather)</td>
+                                <td class="forecast-value">₹2.02M</td>
+                                <td class="confidence-high">28.6%</td>
+                                <td>20%</td>
+                                <td class="confidence-medium">Medium</td>
+                                <td>New Launches</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Beverages</strong></td>
+                                <td>385 SKUs</td>
+                                <td><span class="quantity-badge medium-demand">₹1.2M</span></td>
+                                <td class="trend-stable">+6.8%</td>
+                                <td>Low (Stable)</td>
+                                <td class="forecast-value">₹1.28M</td>
+                                <td class="confidence-medium">19.1%</td>
+                                <td>15%</td>
+                                <td class="confidence-high">Low</td>
+                                <td>Price Competition</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Household Items</strong></td>
+                                <td>320 SKUs</td>
+                                <td><span class="quantity-badge low-demand">₹890K</span></td>
+                                <td class="trend-down">-2.4%</td>
+                                <td>Medium (Seasonal)</td>
+                                <td class="forecast-value">₹868K</td>
+                                <td class="confidence-medium">12.9%</td>
+                                <td>30%</td>
+                                <td class="confidence-low">High</td>
+                                <td>Market Saturation</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Snacks & Confectionery</strong></td>
+                                <td>290 SKUs</td>
+                                <td><span class="quantity-badge medium-demand">₹720K</span></td>
+                                <td class="trend-up">+15.6%</td>
+                                <td>High (Festival)</td>
+                                <td class="forecast-value">₹832K</td>
+                                <td class="confidence-medium">10.8%</td>
+                                <td>22%</td>
+                                <td class="confidence-high">Low</td>
+                                <td>Premium Shift</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Oils & Spices</strong></td>
+                                <td>185 SKUs</td>
+                                <td><span class="quantity-badge low-demand">₹540K</span></td>
+                                <td class="trend-stable">+4.2%</td>
+                                <td>Medium (Cooking Season)</td>
+                                <td class="forecast-value">₹563K</td>
+                                <td class="confidence-low">8.1%</td>
+                                <td>18%</td>
+                                <td class="confidence-medium">Medium</td>
+                                <td>Health Consciousness</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="seasonal-patterns" class="filter-content">
+            <div class="data-table">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU Code</th>
+                                <th>Product Name</th>
+                                <th>Seasonal Pattern</th>
+                                <th>Peak Month</th>
+                                <th>Low Month</th>
+                                <th>Variation %</th>
+                                <th>Current Phase</th>
+                                <th>Next Month Multiplier</th>
+                                <th>Recommended Action</th>
+                                <th>Lead Time Buffer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>SKU001</strong></td>
+                                <td>Premium Rice 5kg</td>
+                                <td>Festival Driven</td>
+                                <td>October</td>
+                                <td>May</td>
+                                <td>±45%</td>
+                                <td class="trend-up">Pre-Festival</td>
+                                <td class="forecast-value">1.35x</td>
+                                <td class="confidence-high">Stock Up</td>
+                                <td>15 days</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU015</strong></td>
+                                <td>Mustard Oil 1L</td>
+                                <td>Winter Cooking</td>
+                                <td>December</td>
+                                <td>June</td>
+                                <td>±30%</td>
+                                <td class="trend-stable">Steady</td>
+                                <td class="forecast-value">1.15x</td>
+                                <td class="confidence-medium">Monitor</td>
+                                <td>10 days</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU023</strong></td>
+                                <td>Cold Cream 100g</td>
+                                <td>Weather Dependent</td>
+                                <td>January</td>
+                                <td>August</td>
+                                <td>±60%</td>
+                                <td class="trend-up">Pre-Winter</td>
+                                <td class="forecast-value">1.45x</td>
+                                <td class="confidence-high">Stock Up</td>
+                                <td>20 days</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU035</strong></td>
+                                <td>Soft Drinks 200ml</td>
+                                <td>Summer Peak</td>
+                                <td>May</td>
+                                <td>January</td>
+                                <td>±55%</td>
+                                <td class="trend-down">Post-Summer</td>
+                                <td class="forecast-value">0.75x</td>
+                                <td class="confidence-medium">Reduce Stock</td>
+                                <td>7 days</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU042</strong></td>
+                                <td>Sweaters & Woollens</td>
+                                <td>Winter Only</td>
+                                <td>December</td>
+                                <td>July</td>
+                                <td>±80%</td>
+                                <td class="trend-up">Pre-Season</td>
+                                <td class="forecast-value">2.1x</td>
+                                <td class="confidence-high">Major Stock Up</td>
+                                <td>30 days</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SKU058</strong></td>
+                                <td>Mithai Boxes</td>
+                                <td>Festival Spikes</td>
+                                <td>October</td>
+                                <td>March</td>
+                                <td>±70%</td>
+                                <td class="trend-up">Festival Season</td>
+                                <td class="forecast-value">1.8x</td>
+                                <td class="confidence-high">Maximum Stock</td>
+                                <td>25 days</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.filter-tab');
+        const contents = document.querySelectorAll('.filter-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const targetId = tab.getAttribute('data-tab');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+
+        // Search functionality
+        const searchBox = document.querySelector('.search-box');
+        searchBox.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const tables = document.querySelectorAll('table tbody');
+            
+            tables.forEach(table => {
+                const rows = table.querySelectorAll('tr:not(.summary-row)');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
