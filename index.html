@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retail Demand Forecast Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+
+  <!-- Header -->
+  <header class="bg-white shadow-md sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-800">Retail Demand Forecast</h1>
+      <nav class="space-x-4">
+        <button class="text-gray-600 hover:text-blue-600">Overview</button>
+        <button class="text-gray-600 hover:text-blue-600">Depots</button>
+        <button class="text-gray-600 hover:text-blue-600">Categories</button>
+        <button class="text-gray-600 hover:text-blue-600">Reports</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Filters -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="text-sm text-gray-500">Select Depot</h3>
+        <select class="mt-2 w-full border-gray-300 rounded-md">
+          <option>All Depots</option>
+          <option>Mumbai</option>
+          <option>Delhi</option>
+          <option>Bangalore</option>
+        </select>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="text-sm text-gray-500">Category</h3>
+        <select class="mt-2 w-full border-gray-300 rounded-md">
+          <option>All Categories</option>
+          <option>Staples</option>
+          <option>Oils</option>
+          <option>Pulses</option>
+        </select>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="text-sm text-gray-500">Timeframe</h3>
+        <select class="mt-2 w-full border-gray-300 rounded-md">
+          <option>Last 6 Months</option>
+          <option>Last 12 Months</option>
+          <option>Year to Date</option>
+        </select>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow flex items-end">
+        <button class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+          Apply Filters
+        </button>
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-sm text-gray-500">Total Forecast</h3>
+        <p class="text-2xl font-bold text-gray-800">12.8M units</p>
+        <p class="text-xs text-green-600">+8.2% vs last year</p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-sm text-gray-500">Top Category</h3>
+        <p class="text-2xl font-bold text-gray-800">Staples</p>
+        <p class="text-xs text-blue-600">45.6% share</p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-sm text-gray-500">Highest Growth</h3>
+        <p class="text-2xl font-bold text-gray-800">Oils & Ghee</p>
+        <p class="text-xs text-green-600">+12.5%</p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-sm text-gray-500">Risk Zone</h3>
+        <p class="text-2xl font-bold text-gray-800">Cooking Oil</p>
+        <p class="text-xs text-red-600">-8.2% demand</p>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- Demand Trend -->
+      <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Top Products Demand Trend</h3>
+        <div class="h-80">
+          <canvas id="demandTrendChart"></canvas>
+        </div>
+      </div>
+      <!-- Category Distribution -->
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Category Distribution</h3>
+        <div class="h-80">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Depot Forecast Table -->
+    <section class="bg-white p-6 rounded-lg shadow">
+      <h3 class="text-lg font-semibold text-gray-700 mb-4">Depot Forecast Summary</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+            <tr>
+              <th class="px-4 py-2 text-left">Depot</th>
+              <th class="px-4 py-2 text-left">Forecast (units)</th>
+              <th class="px-4 py-2 text-left">Growth %</th>
+              <th class="px-4 py-2 text-left">Top Category</th>
+              <th class="px-4 py-2 text-left">Risk Product</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr>
+              <td class="px-4 py-2">Mumbai</td>
+              <td class="px-4 py-2">4.2M</td>
+              <td class="px-4 py-2 text-green-600">+10.5%</td>
+              <td class="px-4 py-2">Staples</td>
+              <td class="px-4 py-2 text-red-600">Cooking Oil</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2">Delhi</td>
+              <td class="px-4 py-2">3.8M</td>
+              <td class="px-4 py-2 text-green-600">+7.8%</td>
+              <td class="px-4 py-2">Pulses</td>
+              <td class="px-4 py-2">Sugar</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2">Bangalore</td>
+              <td class="px-4 py-2">2.9M</td>
+              <td class="px-4 py-2 text-green-600">+9.2%</td>
+              <td class="px-4 py-2">Oils & Ghee</td>
+              <td class="px-4 py-2">Wheat Flour</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeCharts();
+    });
+
+    function initializeCharts() {
+      // Demand Trend Chart
+      const demandCtx = document.getElementById('demandTrendChart').getContext('2d');
+      new Chart(demandCtx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+          datasets: [
+            {
+              label: 'Premium Rice 5kg',
+              data: [2100, 2200, 2400, 2300, 2600, 2450, 2650],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Organic Wheat Flour',
+              data: [3200, 3400, 3300, 3500, 3680, 3520, 3840],
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Cooking Oil 1L',
+              data: [2200, 2100, 1950, 1900, 1890, 2100, 1720],
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Basmati Rice 10kg',
+              data: [1100, 1150, 1200, 1180, 1250, 1180, 1380],
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 15,
+                font: { size: 12 }
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' units';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#6b7280', font: { size: 11 } }
+            },
+            y: {
+              beginAtZero: false,
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: {
+                color: '#6b7280',
+                font: { size: 11 },
+                callback: function(value) {
+                  return value.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Category Distribution Chart
+      const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+      new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Staples', 'Oils & Ghee', 'Pulses', 'Beverages', 'Spices', 'Others'],
+          datasets: [{
+            data: [45.6, 18.9, 22.4, 15.8, 28.7, 10.5],
+            backgroundColor: [
+              '#3b82f6',
+              '#f59e0b',
+              '#10b981',
+              '#8b5cf6',
+              '#ef4444',
+              '#6b7280'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                usePointStyle: true,
+                padding: 15,
+                font: { size: 12 }
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
